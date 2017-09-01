@@ -6,17 +6,24 @@ Timecode computation and utility class
 class Timecode( object ):
 
     # Consts
-    COMP_RATES = { 	23:24, # these need to be ints
+    COMP_RATES = {  23:24, # these need to be ints
                     24:24,
                     25:25,
                     29:30,
-                    30:30 }
-
-    TIME_RATES = { 	23:23.976, # for display
+                    30:30
+    }
+    TIME_RATES = {  23:23.976, # for display
                     24:24,
                     25:25,
                     29:29.97,
-                    30:30 }
+                    30:30
+    }
+    DIVISORS = {    23:1.001,
+                    24:1.000,
+                    25:1.000,
+                    29:1.001,
+                    30:1.000
+    }
     # Retorts
     TYPE_ERROR_COMP_MSG = "Can't compare Timecode and '{}'"
     TYPE_ERROR_ARTH_MSG = "Can't do arithmatic with Timecode and '{}'"
@@ -60,9 +67,9 @@ class Timecode( object ):
     @staticmethod
     def dropTC2Frames( hour, mins, secs, frms ):
         # directly reading this tc value would be too high, so we need to compute an offset
-        totalMinutes	= (60 * hour) + mins
-        adjustment		= (2 * (totalMinutes - (totalMinutes / 10) ))# 2f *not* dropped every 10
-        frameNumber		= ((((((hour*60) + mins)*60 + secs)*30) + frms) - adjustment)
+        totalMinutes    = (60 * hour) + mins
+        adjustment      = (2 * (totalMinutes - (totalMinutes / 10) ))# 2f *not* dropped every 10
+        frameNumber     = ((((((hour*60) + mins)*60 + secs)*30) + frms) - adjustment)
         return frameNumber
 
     def getnosubTC( self ):
@@ -177,12 +184,13 @@ class Timecode( object ):
         self.quantaSinceEphoch = (frames * self.multiplier)
 
     def getMSfromEpoch( self ):
-        return ((self.qTime * self.quantaSinceEpoch) * 1000) + self.msOffset
+        return ((self.qTime * self.quantaSinceEpoch) * 1000.) + self.msOffset
 
     def setMSfromEpoch( self, msFromEp ):
         # Set TC based on ms from Epoch value
-        quantas = round( (float( msFromEp ) / 1000.0) / self.qTime, 0 )
-        remainder = float( msFromEp ) - (quantas * self.qTime)*1000
+        f_mse = float( msFromEp )
+        quantas = round( (f_mse / 1000.0) / self.qTime, 0. )
+        remainder = f_mse - (quantas * self.qTime)*1000.
         self.quantaSinceEpoch = int( quantas )
         self.msOffset = remainder
 
@@ -224,7 +232,7 @@ class Timecode( object ):
         ''' With division/multiplication these rates can comunicate.
             TODO: I'm ignoring for the moment that 150fps = 25fps and 30fps
         '''
-        return ( (self.rate == other.rate)
+        return ( (self.rate == other.rate) )
         
     def inc( self ):
         ''' Depricated by the += (iadd) operation '''
@@ -249,7 +257,8 @@ class Timecode( object ):
         self.multiplier = multiplier if multiplier != 0 else 1
         self.quantaSinceEpoch = 0
         self.msOffset = 0 # This is a notional ms Offset for aligning diferent TC universes.
-        self.qTime = 1 / float( ( Timecode.TIME_RATES[ self.rate ] * self.multiplier ) )
+        exact_rate = Timecode.COMP_RATES[ self.rate ] / Timecode.DIVISORS[ self.rate ]
+        self.qTime = 1. / ( exact_rate * self.multiplier )
         self.sourceBwavRate = -1 # don't know if we derived from a bWav
         self._dfFlag = False # Don't know yet
         
@@ -257,9 +266,12 @@ class Timecode( object ):
         h, m, s, f, u = self.getTC()
         d = ";" if self._dfFlag else ":"
         D = "DF" if self._dfFlag else "NDF"
-        
-        return "Timecode {:0>2d}:{:0>2d}:{:0>2d}{}{:0>2d}.{} {} with {: .3f}ms offset @ {}fps x{} multiplier".format(
-                    h, m, s, d, f, u, D, self.msOffset, Timecode.TIME_RATES[ self.rate ], self.multiplier )
+        rate = Timecode.TIME_RATES[ self.rate ]
+        multi = self.multiplier
+        freq = rate * multi
+        ret = "Timecode {:0>2d}:{:0>2d}:{:0>2d}{}{:0>2d}.{} {} " + \
+              "{: .3f}ms offset @ {}fps x{} multiplier ({}Hz)"
+        return ret.format( h, m, s, d, f, u, D, self.msOffset, rate, multi, freq )
 
     def __str__( self ):
         h, m, s, f, u = self.getTC()
@@ -406,7 +418,7 @@ class Timecode( object ):
             return  0
         else:
             return  1      
-# end of Timecode		
+# end of Timecode       
 
 class TcRange( object ):
     ''' A Timecode Region, having a start, and an end.
@@ -480,7 +492,7 @@ class ClipTimecode( Timecode ):
     def setFromDisplayTC( self, targetTimecode ):
         actual = targetTimecode - self.offset
         self.setFromTC( actual )
-# end of clipTimecode	
+# end of clipTimecode   
 
 class DualMultiTimecode( Timecode ):
     ''' Syncronising MoCap data and Video data, usually Video is x1 and MoCap x4 or x5.
@@ -547,6 +559,7 @@ if __name__ == "__main__":
         print tc1>tc2, tc1<tc2, tc1!=tc2, tc1==tc2
         tc1.setQuantaFromEpoch( -100 )
         print tc1
+        print repr( tc )
     elif False:
         tc = Timecode( 23, 5 )
         tc.setTC( 13, 22, 22, 22, 0 )
