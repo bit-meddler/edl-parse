@@ -165,10 +165,10 @@ class Timecode( object ):
         ( hour, mins, secs, frms ) = frames2DropTC( self.getFramesFromEpoch() )
         return ( hour, mins, secs, frms, subs )
 
-    def setDFTC( self, hour, mins, secs, frms=0, subs=0 ):
+    def setDFTC( self, hour, mins, secs, frms=0, subs=0, offset=0 ):
         framesSinceEpoch = self.dropTC2Frames( hour, mins, secs, frms )
         self.quantaSinceEpoch = ( (framesSinceEpoch * self.multiplier) + subs )
-        self.msOffset = 0
+        self.msOffset = offset
         self._dfFlag = True
 
     def getQuantaFromEpoch( self ):
@@ -242,7 +242,7 @@ class Timecode( object ):
         self.quantaSinceEpoch += quanta
 
     def jumpFrames( self, frames ):
-        quanta = frames * self.multilier
+        quanta = frames * self.multiplier
         self.quantaSinceEpoch += quanta
 
     def readAs( self, alienRate=29, alienMultiplier=1 ):
@@ -439,6 +439,8 @@ class TcRange( object ):
                 sh, sm, ss, sf, su, eh, em, es, ef, eu, durr_tc.getQuantaFromEpoch() )
     
     def setFromStartDur( self, start_string, durr ):
+        ''' Duration is assumed to be frames, could extend to float==seconds
+        '''
         durr_int = 0
         if( type(durr) == int ):
             durr_int = durr
