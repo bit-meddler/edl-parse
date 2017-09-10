@@ -1,4 +1,9 @@
-''' Logging  Dict, generated wih the Henchman sim. '''
+''' Logging  Dict, DATA generated wih the Henchman sim. '''
+import datetime as DT
+import calendar as CR
+from copy import deepcopy
+
+import tcLite   as TC
 
 dat = {
     1 : {
@@ -21,5 +26,31 @@ dat = {
     }
 }
 
-# TODO: Turn this into timecodes
+# Turn this lot into timecodes
+logging = deepcopy( dat )
+
+code = TC.Timecode( 25, (1./1.000) )
+
+for id, logs in logging.iteritems():
+    # get TC epoch 
+    start_stamp = logs['START']
+    start_time  = DT.datetime.fromtimestamp( start_stamp )
+    log_time    = DT.datetime( start_time.year, start_time.month, start_time.day, 0, 0, 0, 0 )
+    log_epoch   = CR.timegm( log_time.timetuple() )
+    # for every event in the log, subtract the epoch
+    code.setSecs( logs['START'] - log_epoch )
+    logs['START'] = code.toString()
+    code.setSecs( logs['END'] - log_epoch )
+    logs['END'] = code.toString()
+    for r in logs['REGIONS']: # can manip a reffed object
+        code.setSecs( r[0] - log_epoch )
+        r[0] = code.toString()
+        code.setSecs( r[1] - log_epoch )
+        r[1] = code.toString()
+    for i, m in enumerate( logs['MARKS'] ): # but not a number
+        code.setSecs( m - log_epoch )
+        logs['MARKS'][i] = code.toString()
+        
+print logging
 # TODO: Devise logging format
+
