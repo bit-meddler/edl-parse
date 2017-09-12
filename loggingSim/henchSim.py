@@ -16,27 +16,30 @@ class HenchSim( gtBase.GLtoast ):
         my chance
     '''
     
+    COLOURS = {  # Fill,   Highlight
+        "BACK": ["696969","808080"], # Dim Gray, web Gray
+        "REG" : ["C0C0C0","C0C0C0"], # Silver, Gainsboro
+        "REC" : ["6B8E23","9ACD32"]  # Olive Drab, Yellow Green
+    }
+    
+    MARK_COLOURS = (
+                ("FA8072", "FFA07A"), # 0 Red (Salmon, lightSalmon)
+                ("FF6347", "FF4500"), # 1 Orange (Tomato, OrangeRed)
+                ("EEE8AA", "FFD700"), # 2 Yellow (PalegoldenRod, Gold)
+                ("98FB98", "00FF7F"), # 3 Green (Palegreen, SpringGreen)
+                ("AFEEEE", "7FFFD4"), # 4 Teal (PaleTurquoise, AquaMarine)
+                ("4682B4", "1E90FF"), # 5 Blue (SteelBlue, DogerBlue)
+                ("4169E1", "0000FF"), # 6 Indigo (RoyalBlue, Blue)
+                ("9966CC", "BA2BE2"), # 7 Violet (Amethist, Blueviolet)
+                ("F9A460", "D2691E"), # 8 Brown (SandyBrown, Chocolate)
+                ("FFFAFA", "FFFFFF")  # 9 White (Snow, White)
+    )
+    
     def __init__(self):
         super( HenchSim, self ).__init__()
 
         
     def init( self ):         # Fill,    Highlight
-        self.colours = {"BACK":["696969","808080"], # Dim Gray, web Gray
-                        "REG" :["C0C0C0","C0C0C0"], # Silver, Gainsboro
-                        "REC" :["6B8E23","9ACD32"]  # Olive Drab, Yellow Green
-        }
-        self.mark_colours = (
-            ("FA8072", "FFA07A"), # 0 Red (Salmon, lightSalmon)
-            ("FF6347", "FF4500"), # 1 Orange (Tomato, OrangeRed)
-            ("EEE8AA", "FFD700"), # 2 Yellow (PalegoldenRod, Gold)
-            ("98FB98", "00FF7F"), # 3 Green (Palegreen, SpringGreen)
-            ("AFEEEE", "7FFFD4"), # 4 Teal (PaleTurquoise, AquaMarine)
-            ("4682B4", "1E90FF"), # 5 Blue (SteelBlue, DogerBlue)
-            ("4169E1", "0000FF"), # 6 Indigo (RoyalBlue, Blue)
-            ("9966CC", "BA2BE2"), # 7 Violet (Amethist, Blueviolet)
-            ("F9A460", "D2691E"), # 8 Brown (SandyBrown, Chocolate)
-            ("FFFAFA", "FFFFFF")  # 9 White (Snow, White)
-        )
         
         self.rec_list = []
         self.takes = {}
@@ -172,7 +175,7 @@ class HenchSim( gtBase.GLtoast ):
         # build draw list
         self.rec_list=[]
         # background
-        colour = self.colours["BACK"]
+        colour = self.COLOURS["BACK"]
         self.rec_list.append( (off_x, off_y, disp_w, disp_h, colour[0], GL_QUADS ) )
         self.rec_list.append( (off_x, off_y, disp_w, disp_h, colour[1], GL_LINES ) )
         
@@ -184,7 +187,7 @@ class HenchSim( gtBase.GLtoast ):
             draw_scale = float(off_m) / (end - dat["START"]) # pixels per second
             
             # regions
-            colour = self.colours["REG"]
+            colour = self.COLOURS["REG"]
             for reg_start, reg_end in dat["REGIONS"]: # skips if empty
                 offsetl = reg_start - start
                 px_x = offsetl * draw_scale
@@ -194,7 +197,7 @@ class HenchSim( gtBase.GLtoast ):
                 else:
                     # no out set, so recording
                     offsetr = end - start
-                    colour = self.colours["REC"]
+                    colour = self.COLOURS["REC"]
                 px_m = offsetr * draw_scale
                 reg_x = int(px_x)
                 reg_w = int(px_m) - reg_x
@@ -207,7 +210,7 @@ class HenchSim( gtBase.GLtoast ):
                 offset = mark - start
                 px_x = offset * draw_scale
                 mark_x = int(px_x)
-                colour = self.mark_colours[group[0]]
+                colour = self.MARK_COLOURS[group[0]]
                 self.rec_list.append( (mark_x, off_y, 3, disp_h, colour[0], GL_QUADS ) )
                 self.rec_list.append( (mark_x, off_y, 1, disp_h, colour[1], GL_LINES ) )
             
