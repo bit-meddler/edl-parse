@@ -23,9 +23,20 @@ class HenchSim( gtBase.GLtoast ):
     def init( self ):         # Fill,    Highlight
         self.colours = {"BACK":["696969","808080"], # Dim Gray, web Gray
                         "REG" :["C0C0C0","C0C0C0"], # Silver, Gainsboro
-                        "REC" :["6B8E23","9ACD32"], # Olive Drab, Yellow Green
-                        "MARK":["FFFFE0","FFDEAD"]  # Light Yellow, Navajo White
+                        "REC" :["6B8E23","9ACD32"]  # Olive Drab, Yellow Green
         }
+        self.mark_colours = (
+            ("FA8072", "FFA07A"), # 0 Red (Salmon, lightSalmon)
+            ("FF6347", "FF4500"), # 1 Orange (Tomato, OrangeRed)
+            ("EEE8AA", "FFD700"), # 2 Yellow (PalegoldenRod, Gold)
+            ("98FB98", "00FF7F"), # 3 Green (Palegreen, SpringGreen)
+            ("AFEEEE", "7FFFD4"), # 4 Teal (PaleTurquoise, AquaMarine)
+            ("4682B4", "1E90FF"), # 5 Blue (SteelBlue, DogerBlue)
+            ("4169E1", "0000FF"), # 6 Indigo (RoyalBlue, Blue)
+            ("9966CC", "BA2BE2"), # 7 Violet (Amethist, Blueviolet)
+            ("F9A460", "D2691E"), # 8 Brown (SandyBrown, Chocolate)
+            ("FFFAFA", "FFFFFF")  # 9 White (Snow, White)
+        )
         
         self.rec_list = []
         self.takes = {}
@@ -58,7 +69,7 @@ class HenchSim( gtBase.GLtoast ):
     def end( self ):
         self._endTake()
         print self.takes
-        exit(0)
+        exit(0)      
         
         
     def _startTake( self ):
@@ -119,6 +130,8 @@ class HenchSim( gtBase.GLtoast ):
             # are 'hints' pressed?
             which_np = np.where( self._key_man.active[48:58]==1 )
             which = map(int, which_np[0].tolist() )
+            if len(which)==0:
+                which =[9] # default to white
             self.takes[ self.take_no ]["MARKS"].append( (self.now, which) )
             
             
@@ -190,13 +203,13 @@ class HenchSim( gtBase.GLtoast ):
                 self.rec_list.append( (reg_x, off_y, reg_w, disp_h, colour[1], GL_LINES ) )
                 
             # Finally, Marks
-            colour = self.colours["MARK"]
             for (mark, group) in dat["MARKS"]:
                 offset = mark - start
                 px_x = offset * draw_scale
-                mark_x = int(px_x) - 1
+                mark_x = int(px_x)
+                colour = self.mark_colours[group[0]]
                 self.rec_list.append( (mark_x, off_y, 3, disp_h, colour[0], GL_QUADS ) )
-                self.rec_list.append( (mark_x, off_y, 3, disp_h, colour[1], GL_LINES ) )
+                self.rec_list.append( (mark_x, off_y, 1, disp_h, colour[1], GL_LINES ) )
             
             
     def _draw( self ):
@@ -206,7 +219,7 @@ class HenchSim( gtBase.GLtoast ):
     
         # Draw Stuff
         self.set2D()
-        self.now = time.time() - self._epoch
+        self.now = time.time() - self._epoch # I'd prefer not to do this every frame, but it's needed for drawing
         self._computeRecs()
         if self.reverseDrawOrder:
             self.rec_list.reverse() # gl wants front to back drawing order
