@@ -39,14 +39,14 @@ class HenchSim( gtBase.GLtoast ):
         super( HenchSim, self ).__init__()
 
         
-    def init( self ):         # Fill,    Highlight
-        
-        self.rec_list = []
-        self.takes = {}
-        self.take_no = 1
-        self.active_take = None
-        self.recording = False
-        self.regioning = False
+    def init( self ):
+        self.rec_list       = []    # Draw list of rectangles to draw
+        self.takes          = {}    # logging info
+        self.take_no        = 1     # current take
+        self.active_take    = None  # Current active take
+        self.recording      = False # flags
+        self.regioning      = False # flags
+        self.bar_h          = 20    # height of display
         
         # timing
         now         = time.time()
@@ -163,21 +163,20 @@ class HenchSim( gtBase.GLtoast ):
         glMatrixMode( GL_PROJECTION )
         glLoadIdentity()
         glOrtho( 0.0, self._wh[0], 0.0, self._wh[1], 0.0, 1.0 )
-        #glMatrixMode( GL_MODELVIEW )
         
         
     def _computeRecs( self ):
         off_x, off_y = 20, 20 # margin
         off_m = self._wh[0]-off_x # Right limit, inc margin
-        disp_h = 20 # height of display
         disp_w = off_m - off_x
         
         # build draw list
         self.rec_list=[]
+        
         # background
         colour = self.COLOURS["BACK"]
-        self.rec_list.append( (off_x, off_y, disp_w, disp_h, colour[0], GL_QUADS ) )
-        self.rec_list.append( (off_x, off_y, disp_w, disp_h, colour[1], GL_LINES ) )
+        self.rec_list.append( (off_x, off_y, disp_w, self.bar_h, colour[0], GL_QUADS) )
+        self.rec_list.append( (off_x, off_y, disp_w, self.bar_h, colour[1], GL_LINES) )
         
         # Take Data
         if self.active_take != None:
@@ -202,8 +201,8 @@ class HenchSim( gtBase.GLtoast ):
                 reg_x = int(px_x)
                 reg_w = int(px_m) - reg_x
                 # add region to list
-                self.rec_list.append( (reg_x, off_y, reg_w, disp_h, colour[0], GL_QUADS ) )
-                self.rec_list.append( (reg_x, off_y, reg_w, disp_h, colour[1], GL_LINES ) )
+                self.rec_list.append( (reg_x, off_y, reg_w, self.bar_h, colour[0], GL_QUADS) )
+                self.rec_list.append( (reg_x, off_y, reg_w, self.bar_h, colour[1], GL_LINES) )
                 
             # Finally, Marks
             for (mark, group) in dat["MARKS"]:
@@ -211,8 +210,8 @@ class HenchSim( gtBase.GLtoast ):
                 px_x = offset * draw_scale
                 mark_x = int(px_x)
                 colour = self.MARK_COLOURS[group[0]]
-                self.rec_list.append( (mark_x, off_y, 3, disp_h, colour[0], GL_QUADS ) )
-                self.rec_list.append( (mark_x, off_y, 1, disp_h, colour[1], GL_LINES ) )
+                self.rec_list.append( (mark_x, off_y, 3, self.bar_h, colour[0], GL_QUADS) )
+                self.rec_list.append( (mark_x, off_y, 1, self.bar_h, colour[1], GL_LINES) )
             
             
     def _draw( self ):
