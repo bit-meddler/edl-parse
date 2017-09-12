@@ -3,7 +3,7 @@ Tool to parse an AVID EDL and find take names and selected data regions
 
 Really need a lot of example EDLs to sample and stress test.
 
-##/loggingSim
+## /loggingSim
 
 Tool to simulate the generation of a 'Digi-Continuity' file representing a day of motion capture, or simalar aquisition ativity.
 
