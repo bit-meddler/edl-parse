@@ -40,6 +40,10 @@ class HenchSim( gtBase.GLtoast ):
 
         
     def init( self ):
+        # super
+        super( HenchSim, self ).init()
+        
+        # my Vars
         self.rec_list       = []    # Draw list of rectangles to draw
         self.takes          = {}    # logging info
         self.take_no        = 1     # current take
@@ -66,12 +70,15 @@ class HenchSim( gtBase.GLtoast ):
         
         # clean exit
         self._key_man.registerFallingCB( 27, self.end)
-        super( HenchSim, self ).init()
+        
+        # set up HUD
+        self._hud_man.addElement( "MSG", self._wh[0]-200, self._wh[1]-10, CT.web23f("#FFFFFF"), -1 )
         
         
     def end( self ):
         self._endTake()
         print self.takes
+        print self._hud_man.HUD_elements
         exit(0)      
         
         
@@ -139,32 +146,16 @@ class HenchSim( gtBase.GLtoast ):
             
             
     def _advanceTake( self ):
-        self.take_no += 1
-        print "Advance to {}".format( self.take_no )
-        
-        
-    def drawRect2D( self, x, y, w, h, col=(.5,.0,.0), mode=GL_QUADS ):
-        glColor3f( col[0], col[1], col[2] )
-        glBegin( mode )
-        glVertex2f(x, y)
-        glVertex2f(x + w, y)
-        glVertex2f(x + w, y + h)
-        glVertex2f(x, y + h)
-        if mode==GL_LINES:
-            glVertex2f(x, y)
-            glVertex2f(x, y + h)
-            glVertex2f(x + w, y)
-            glVertex2f(x + w, y + h)
-        glEnd()
-          
-          
-    def set2D( self ):
-        glViewport( 0, 0, self._wh[0], self._wh[1] )
-        glMatrixMode( GL_PROJECTION )
-        glLoadIdentity()
-        glOrtho( 0.0, self._wh[0], 0.0, self._wh[1], 0.0, 1.0 )
-        
-        
+        if not self.recording:
+            self.take_no += 1
+            retort = "Take: BlarBlar_AA_AA_{:0>3}".format( self.take_no )
+            self._hud_man.addMsg( "LOG", "Advance", CT.web23f("#00FF00") )
+            self._hud_man.addMsg( "MSG", retort, CT.web23f("#00FF00") )
+            print self._hud_man.HUD_elements
+        else:
+            self.HUD_msg = "Can't advance when recording"
+       
+       
     def _computeRecs( self ):
         off_x, off_y = 20, 20 # margin
         off_m = self._wh[0]-off_x # Right limit, inc margin
@@ -223,12 +214,15 @@ class HenchSim( gtBase.GLtoast ):
         self.set2D()
         self.now = time.time() - self._epoch # I'd prefer not to do this every frame, but it's needed for drawing
         self._computeRecs()
-        if self.reverseDrawOrder:
+        if self._reverseDrawOrder:
             self.rec_list.reverse() # gl wants front to back drawing order
-        
+        else:
+            self.doHUD()
+            
         for (x, y, w, h, col, mode) in self.rec_list:
             self.drawRect2D( x, y, w, h, CT.web23f( col ), mode )
-                    
+        if self._reverseDrawOrder:
+            self.doHUD()
         # swap
         glutSwapBuffers()   
         
