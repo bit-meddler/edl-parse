@@ -6,6 +6,8 @@ import numpy as np
 import time
 import random
 import sys
+import logging
+
 from collections import deque
 
 import chromaTool as CT
@@ -48,6 +50,8 @@ class KeyMan( object ):
         self._falls      = {}
         self._taps       = {}
         
+        # Logging
+        self.log = logging.getLogger( __name__ )
         
     def push( self, key_idx, action ):
         ''' deal with keypressess, keyholds, and keytaps.
@@ -105,7 +109,8 @@ class HudMan( object ):
     def __init__( self ):
         self.HUD_elements = {}
         self.HUD_display_list = []
-        
+        # Logging
+        self.log = logging.getLogger( __name__ )
         
     def addElement( self, name, x, y, col=None, life=DEFAULT_LIFE, font="H12" ):
         if name in self.HUD_elements:
@@ -198,6 +203,8 @@ class GLtoast( object ):
         self.nav_mode = "MAYA" # TODO: "QUAKE" mode (wasd + orbit mouse)
         self._draw_mode = "3D" #????
         self._log_pos = (10,4)
+        self.log = logging.getLogger( "GT-Core" )
+        self.log.debug( "Goat Toaster STarted" )
         
         
     def _reSize( self, width, height ):
