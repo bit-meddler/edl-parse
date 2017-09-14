@@ -183,14 +183,20 @@ class GLtoast( object ):
         "BM8": OpenGL.GLUT.GLUT_BITMAP_8_BY_13,
         "BM9": OpenGL.GLUT.GLUT_BITMAP_9_BY_15        
     }
-
+    STYLES = {
+        "QUADS": GL_QUADS,
+        "LINES": GL_LINES,
+        "LOOPS": GL_LINE_LOOP,
+        "POLYS": GL_POLYGON
+    }
     
     def __init__( self ):
         self.g_wind = None
-        self._glut_opts = None
+        self._glut_opts = GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH
         self._title = None
         self._wh = (640,480)
         self._native_wh = (1920,1280)
+        self._bg = (0.0, 0.0, 0.0, 1.0)
         self._native_pos = (0,0)
         self._center = False
         self._ratio_lock = True
@@ -205,6 +211,9 @@ class GLtoast( object ):
         self._log_pos = (10,4)
         self.log = logging.getLogger( "GT-Core" )
         self.log.debug( "Goat Toaster STarted" )
+        self.rec_list = []
+        self.line_list = []
+        self._draw_order = ["LINES","RECTS"]
         
         
     def _reSize( self, width, height ):
@@ -240,9 +249,34 @@ class GLtoast( object ):
         
         
     def _draw( self ):
-        pass
-
+        glutSwapBuffers()
         
+
+    def _clear( self )    :
+        glClearColor( *self._bg )
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        
+        
+    def paintLists( self ):
+        # Draw to back buffer items in the lists
+        if self._reverseDrawOrder:
+            self.rec_list.reverse() # darwin wants front to back drawing order
+            self.line_list.reverse()
+        else:
+            self.doHUD()
+            
+        for task in self._draw_order:
+            if task == "RECTS":
+                for (x, y, w, h, col, mode) in self.rec_list:
+                    self.drawRect2D( x, y, w, h, CT.web23f( col ), mode )
+            elif task == "LINES":
+                for (x, y, m, n, col) in self.line_list:
+                    self.drawLine2D( x, y, col )
+            
+        if self._reverseDrawOrder:
+            self.doHUD()
+
+            
     def _keyDn( self, key, x, y ):
         self._action_native_pos = (x, y)
         self._key_man.push( ord(key.lower()), KeyMan.DOWN )
@@ -297,8 +331,17 @@ class GLtoast( object ):
             glVertex2f(x + w, y)
             glVertex2f(x + w, y + h)
         glEnd()
-          
-          
+        
+        
+    def drawLine2D( self, x, y, m, n, col=None ):
+        gl_col = GLtoast._flexCol( col )
+        glColor4f( *gl_col )
+        glBegin( GL_LINES )
+        glVertex2f( x, y )
+        glVertex2f( m, n )
+        glEnd()
+        
+        
     def set2D( self ):
         glViewport( 0, 0, self._wh[0], self._wh[1] )
         glMatrixMode( GL_PROJECTION )
@@ -369,6 +412,7 @@ class GLtoast( object ):
         # deal with platform differences
         if sys.platform=="darwin":
             self._reverseDrawOrder = True
+            self._draw_order.reverse()
             
         # set up HUD
         self._hud_man.addElement( "LOG", 10, self._wh[1]-10, CT.web23f("#FFFFFF"), 50 )

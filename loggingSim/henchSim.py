@@ -1,8 +1,7 @@
-from OpenGL.GL   import *
-from OpenGL.GLUT import *
-from OpenGL.GLU  import *
-import numpy as np
+
 import time
+
+import numpy    as np
 import datetime as DT
 import calendar as CR
 
@@ -44,7 +43,6 @@ class HenchSim( gtBase.GLtoast ):
         super( HenchSim, self ).init()
         
         # my Vars
-        self.rec_list       = []    # Draw list of rectangles to draw
         self.takes          = {}    # logging info
         self.take_no        = 1     # current take
         self.active_take    = None  # Current active take
@@ -78,7 +76,6 @@ class HenchSim( gtBase.GLtoast ):
     def end( self ):
         self._endTake()
         print self.takes
-        print self._hud_man.HUD_elements
         exit(0)      
         
         
@@ -150,8 +147,7 @@ class HenchSim( gtBase.GLtoast ):
             self.take_no += 1
             retort = "Take: BlarBlar_AA_AA_{:0>3}".format( self.take_no )
             self._hud_man.addMsg( "LOG", "Advance", CT.web23f("#00FF00") )
-            self._hud_man.addMsg( "MSG", retort, CT.web23f("#00FF00") )
-            print self._hud_man.HUD_elements
+            self._hud_man.addMsg( "MSG", retort )
         else:
             self.HUD_msg = "Can't advance when recording"
        
@@ -166,8 +162,8 @@ class HenchSim( gtBase.GLtoast ):
         
         # background
         colour = self.COLOURS["BACK"]
-        self.rec_list.append( (off_x, off_y, disp_w, self.bar_h, colour[0], GL_QUADS) )
-        self.rec_list.append( (off_x, off_y, disp_w, self.bar_h, colour[1], GL_LINES) )
+        self.rec_list.append( (off_x, off_y, disp_w, self.bar_h, colour[0], self.STYLES["QUADS"]) )
+        self.rec_list.append( (off_x, off_y, disp_w, self.bar_h, colour[1], self.STYLES["LINES"]) )
         
         # Take Data
         if self.active_take != None:
@@ -192,8 +188,8 @@ class HenchSim( gtBase.GLtoast ):
                 reg_x = int(px_x)
                 reg_w = int(px_m) - reg_x
                 # add region to list
-                self.rec_list.append( (reg_x, off_y, reg_w, self.bar_h, colour[0], GL_QUADS) )
-                self.rec_list.append( (reg_x, off_y, reg_w, self.bar_h, colour[1], GL_LINES) )
+                self.rec_list.append( (reg_x, off_y, reg_w, self.bar_h, colour[0], self.STYLES["QUADS"]) )
+                self.rec_list.append( (reg_x, off_y, reg_w, self.bar_h, colour[1], self.STYLES["LINES"]) )
                 
             # Finally, Marks
             for (mark, group) in dat["MARKS"]:
@@ -201,34 +197,27 @@ class HenchSim( gtBase.GLtoast ):
                 px_x = offset * draw_scale
                 mark_x = int(px_x)
                 colour = self.MARK_COLOURS[group[0]]
-                self.rec_list.append( (mark_x, off_y, 3, self.bar_h, colour[0], GL_QUADS) )
-                self.rec_list.append( (mark_x, off_y, 1, self.bar_h, colour[1], GL_LINES) )
+                self.rec_list.append( (mark_x, off_y, 3, self.bar_h, colour[0], self.STYLES["QUADS"]) )
+                self.rec_list.append( (mark_x, off_y, 1, self.bar_h, colour[1], self.STYLES["LINES"]) )
             
             
     def _draw( self ):
-        # gl Reset
-        glClearColor(0.0, 0.0, 0.0, 1.0)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        # Reset canvas
+        self._clear()
     
         # Draw Stuff
         self.set2D()
         self.now = time.time() - self._epoch # I'd prefer not to do this every frame, but it's needed for drawing
         self._computeRecs()
-        if self._reverseDrawOrder:
-            self.rec_list.reverse() # gl wants front to back drawing order
-        else:
-            self.doHUD()
-            
-        for (x, y, w, h, col, mode) in self.rec_list:
-            self.drawRect2D( x, y, w, h, CT.web23f( col ), mode )
-        if self._reverseDrawOrder:
-            self.doHUD()
-        # swap
-        glutSwapBuffers()   
+        
+        # do lists
+        self.paintLists()
+        
+        # swap buffers & clean up
+        super( HenchSim, self )._draw()
         
         
 myApp = HenchSim()
-myApp._glut_opts = GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA #| GLUT_DEPTH
 myApp._title = "MoCap Henchman, test regions"
 myApp._center = True
 myApp._wh = ( 640, 60 )
