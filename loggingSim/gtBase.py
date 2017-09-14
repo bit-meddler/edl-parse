@@ -121,7 +121,7 @@ class HudMan( object ):
                 "POS"  : (x,y),
                 "QUE"  : deque(),
                 "TTL"  : 0,
-                "COL"  : GLtoast._flexCol( col ),
+                "COL"  : CT._flexCol( col ),
                 "LIFE" : life,
                 "TASK" : 0,
                 "FONT" : font
@@ -149,7 +149,7 @@ class HudMan( object ):
             self.HUD_elements[name]["QUE"].append( [text, col, ttl, font] )
             
         else:
-            print "now HUD group {}".format( name )
+            print "no HUD group '{}'".format( name )
             
             
     def getNextMsg( self, name ):
@@ -214,6 +214,9 @@ class GLtoast( object ):
         self.rec_list = []
         self.line_list = []
         self._draw_order = ["LINES","RECTS"]
+        self._log_pos =(10,10)
+        self._log_life = 45
+        self._log_col = "#ffffff"
         
         
     def _reSize( self, width, height ):
@@ -296,29 +299,10 @@ class GLtoast( object ):
         self._action_native_pos = (x, y)
         self._key_man.push( val + KeyMan.SPECIAL_OS, KeyMan.UP )
         
-        
-    @staticmethod
-    def _flexCol( col, alpha=None ):
-        sz = 0
-        if col==None:
-            _col = (1.,0.,0.)
-            sz = 3
-        else:
-            _col = col
-            sz   = len( col )
-            
-        gl_col = [ _col[0], _col[1], _col[2], 1.0 ]
-        
-        if ( sz==4 ):
-            gl_col[3] = col[3]
-        if not alpha == None:
-                gl_col[3] = alpha
-                
-        return gl_col
                 
     def drawRect2D( self, x, y, w, h, col=None, mode=GL_QUADS ):
         # for HUD and 2D drawing in context piuxel space
-        gl_col = GLtoast._flexCol( col )
+        gl_col = CT._flexCol( col )
         glColor4f( *gl_col )
         glBegin( mode )
         glVertex2f(x, y)
@@ -334,7 +318,7 @@ class GLtoast( object ):
         
         
     def drawLine2D( self, x, y, m, n, col=None ):
-        gl_col = GLtoast._flexCol( col )
+        gl_col = CT._flexCol( col )
         glColor4f( *gl_col )
         glBegin( GL_LINES )
         glVertex2f( x, y )
@@ -350,7 +334,7 @@ class GLtoast( object ):
         
         
     def printHUDtxt( self, x, y, text, col=None, font="H10"):
-        gl_col = GLtoast._flexCol( col )
+        gl_col = CT._flexCol( col )
         glColor4f( *gl_col )
         glWindowPos2i( x, y )
         glutBitmapString( self.FONTS[ font ], text )
@@ -414,11 +398,9 @@ class GLtoast( object ):
             self._reverseDrawOrder = True
             self._draw_order.reverse()
             
-        # set up HUD
-        self._hud_man.addElement( "LOG", 10, self._wh[1]-10, CT.web23f("#FFFFFF"), 50 )
-        self._hud_man.addMsg( "LOG", "Booting...", CT.web23f("#0000FF") )
-        self._hud_man.addMsg( "LOG", "Ready!" )
-
+        self._hud_man.addElement( "LOG", self._log_pos[0], self._wh[1]-self._log_pos[1],
+                                         CT.web23f(self._log_col), self._log_life )
+        
         
     def prep( self ):
         pass

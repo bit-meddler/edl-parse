@@ -7,7 +7,6 @@ import calendar as CR
 
 import gtBase
 import chromaTool as CT
-import tcLite     as TC
 
 
 class HenchSim( gtBase.GLtoast ):
@@ -41,6 +40,7 @@ class HenchSim( gtBase.GLtoast ):
     def init( self ):
         # super
         super( HenchSim, self ).init()
+        self._hud_man.addMsg( "LOG", "Booting...", CT.web23f("#0000FF") )
         
         # my Vars
         self.takes          = {}    # logging info
@@ -69,8 +69,9 @@ class HenchSim( gtBase.GLtoast ):
         # clean exit
         self._key_man.registerFallingCB( 27, self.end)
         
-        # set up HUD
+        # set up Messages
         self._hud_man.addElement( "MSG", self._wh[0]-200, self._wh[1]-10, CT.web23f("#FFFFFF"), -1 )
+        self._hud_man.addMsg( "LOG", "Ready!" )
         
         
     def end( self ):
