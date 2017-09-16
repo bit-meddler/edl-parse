@@ -169,6 +169,32 @@ X11LUT_RGB8 = {"AliceBlue": (240, 248, 255),
              "YellowGreen": (154, 205,  50),
 }
 
+# Normalize Colours into 4 floats
+def _flexCol( col, alpha=None ):
+    sz = 0
+    if col==None:
+        _col = (1.,0.,0.)
+        sz = 3
+    else:
+        _col = col
+        sz   = len( col )
+        
+    gl_col = [ _col[0], _col[1], _col[2], 1.0 ]
+    
+    if ( sz==4 ):
+        gl_col[3] = col[3]
+    if not alpha == None:
+            gl_col[3] = alpha
+            
+    return gl_col
+
+    
+def web24f( val, alpha=None ):
+    a = alpha if not alpha==None else 1.0
+    r, g, b = web23f( val )
+    return ( r, g, b, a )
+    
+    
 def web23f( val, cache={} ):
     if val in cache:
         return cache[val]
