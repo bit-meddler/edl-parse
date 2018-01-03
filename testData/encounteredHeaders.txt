@@ -1,0 +1,28 @@
+--- Begins ---
+[ HEADER
+	[TITLE:]
+	[FCM:] [NON-DROP FRAME]
+	[*] [FORMAT] [res wwwwxhhhh] [interlacing i/p] [rate]fps
+]
+[ Edit Event list
+	[eventID] [clipName/roll/BL] [Audio/Video] [transition C/D/W{number}] {transition duration} [src_i] [src_o] [tl_i] [tl_o]
+	[M2] [clipName/roll] [timeWarp fps] {annotation} [src_i] # affects above
+	[ Comments or event metadata
+		[*] [FROM CLIP NAME:] [nnnn]
+		[*] [REEL] [rrrrr] [IS CLIP] [nnnn]
+		[*] [LOC:] [tc] [colour]  [marker no]
+		[*] [Effects:
+		 {effect description, free text} # one space indent
+		]
+		[*] [COMMENT:
+		{free text}
+		]
+		[EFFECTS NAME] [effect]
+		[AUDIO GAIN IS] [gain]DB AT [env_tc]
+	]
+	{newline (\n/\r\n)} # so EDLs have a line separating event blocks
+]
+[ EoF MetaData
+	[>>>] {metadata}
+]
+--- Ends ---
