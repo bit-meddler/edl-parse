@@ -1,0 +1,7 @@
+"example.edl"
+From: http://thecargocult.nz/example.EDL
+
+"RSG-BLACK-1.edl"
+From: http://r-s-g.org/EDL/BLACK/RSG-BLACK-1.edl
+
+regex:(\d{3})\s+(\w+)\s+([av/]+)\s+([c|d]|w\d+)\s+(\w*?)\s((?:(?:\d\d)[:;]?){4})\s+((?:(?:\d\d)[:;]?){4})\s+((?:(?:\d\d)[:;]?){4})\s+((?:(?:\d\d)[:;]?){4})\s*
