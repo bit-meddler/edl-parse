@@ -21,6 +21,7 @@ class EdEvent( object ):
         self.taking = None
         self.meta = {}
         self.extended = {}
+        self.unexpected = []
         
         
 class EdlParse( object ):
@@ -89,6 +90,9 @@ class EdlParse( object ):
         e.timeline_out = _makeTC( match.group(9) )
         return e
         
+    def _unexpected( self, line ):
+         print "Unrecognised EDL Line:\n'{}'".format( line )
+         
     def parse( self ):
         # open file
         fh = open( self.source_file, "rb" )
@@ -130,7 +134,7 @@ class EdlParse( object ):
                 header = False
                 got_match = True
             if not got_match:
-                print "Unrecognised Header Line:\n'{}'".format( line )
+                self._unexpected(line)
                 
         # Now examine list of Edit Events....
         cur_id = -1
@@ -198,7 +202,8 @@ class EdlParse( object ):
             # Last resort
             if( fails > 4 ):
                 # tried all Regexs, this is unknown metadata
-                self.events[ cur_id ].extended[ "UNKNOWN" ] = line
+                self.events[ cur_id ].unexpected.append( line )
+                self._unexpected( line )
                 line = fh.readline
                 fails = 0
                 
