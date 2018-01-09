@@ -24,6 +24,24 @@ class EdEvent( object ):
         self.unexpected = []
         
         
+class EdTransition( object  ):
+    """
+    A transition, which will have two events and some paramiterization of the
+    transition, such as durration, speed, IN Time
+    
+    Expected Transitions:
+        Disolve
+        Wipe
+        
+    Transitions may additionally have Named Effect(s)
+        Cross Disolve
+        Cross Fade
+        Constant Power
+        
+    """
+    pass
+    
+    
 class EdlParse( object ):
     """
     EDL parser
