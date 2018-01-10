@@ -116,7 +116,6 @@ class EdlParse( object ):
         fh = open( self.source_file, "rb" )
         
         cur_rate = cur_id = None
-        block_hint = False
         
         # read title
         header = True
@@ -163,8 +162,7 @@ class EdlParse( object ):
                 # update dropping
                 new_rate = match.group( 1 )
                 if( new_rate != cur_rate ):
-                    block_hint = True
-                    ` = new_rate
+                    cur_rate = new_rate
                 line = fh.readline()
                 fails = 0
             else:
@@ -176,7 +174,6 @@ class EdlParse( object ):
                 test_id = int( match.group(1) )
                 if( test_id != cur_id ):
                     # New Event
-                    block_hint = False
                     cur_id = test_id
                     e = self._makeEvent( cur_id, match )
                     e.meta[ "DROPPING" ] = cur_rate
