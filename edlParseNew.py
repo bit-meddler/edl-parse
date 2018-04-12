@@ -77,8 +77,16 @@ class EdlParse( object ):
     M_DROPPING = re.compile(   r"fcm:\s+" +                     #   Rate preamble
                                 "([\w\-]+)" +                   # 1 DF / NDF
                                 "\s+frame", re.I )              #   Ignore Case
+    
+    # Special Test for corrupt timecode
+    M_BAD_TC = re.compile(      r"\d{1,3}\s+" +                 #   id
+                                "\w+\s+" +                      #   Inner Name
+                                "[av/]+\s+" +                   #   Taking
+                                "(?:c|d|w\d)+\s+" +             #   Transition
+                                "\w*?\s" +                      #   Optional Duration
+                                ".*?::\s*", re.I )              #   Corrupt TC!
 
-                                
+                               
     def __init__( self, file_path=None, rate=25 ):
         self.source_file = file_path
         self.sequence_name = None
@@ -89,6 +97,7 @@ class EdlParse( object ):
         self.extended = []
         self._interuption = None
         self._fh = None
+        self.unexpected = 0
 
         
     def _makeTC( self, tc_string ):
@@ -113,7 +122,9 @@ class EdlParse( object ):
 
         
     def _unexpected( self, line ):
-         print "Unrecognised EDL Line:\n'{}'".format( line )
+        self.unexpected += 1
+        print "Unrecognised EDL Line:\n'{}'".format( line )
+
 
     @staticmethod
     def _cleanLine( line ):
@@ -126,7 +137,7 @@ class EdlParse( object ):
         fh = open( self.source_file, "rb" )
         
         cur_rate = cur_e_id = None
-        
+
 # Header ----------------------------------------------
         header = True
         while( header ):
@@ -228,16 +239,30 @@ class EdlParse( object ):
                 fails = 0
             else:
                 fails += 1
-                
+               
             # Last resort
             if( fails > 5 ):
+                # Test for corrupt TC
+                match = self.M_BAD_TC.match( line )
+                if match:
+                    line = line.replace( "::", ":00:" )
+                    # I give you back your life...
+                    fails -= 1
+                    continue
                 # tried all Regexs, this is unknown metadata
                 self.events[ cur_e_id ].unexpected.append( line )
                 self._unexpected( line )
                 line = self._cleanLine( fh.readline() )
                 fails = 0
                 
-                
+        # Done!
+        if( self.unexpected > 0 ):
+            print( "{} Unexpected Line{} found in this file!".format(
+                self.unexpected, "s" if self.unexpected > 2 else "" ) )
+            
+        # END!
+        
+        
 if __name__ == "__main__":
     # OK GO!
     import os
