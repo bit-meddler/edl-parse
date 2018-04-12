@@ -47,7 +47,7 @@ class EdlParse( object ):
     EDL parser
     """
     # Regexs
-    M_EVENT = re.compile(      r"(\d{3})\s+" +                  # 1 Cut id
+    M_EVENT = re.compile(      r"(\d{1,3})\s+" +                # 1 Cut id
                                 "(\w+)\s+" +                    # 2 Inner Name
                                 "([av/]+)\s+" +                 # 3 Taking
                                 "(c|d|w\d+)\s+" +               # 4 Transition
@@ -77,6 +77,7 @@ class EdlParse( object ):
     M_DROPPING = re.compile(   r"fcm:\s+" +                     #   Rate preamble
                                 "([\w\-]+)" +                   # 1 DF / NDF
                                 "\s+frame", re.I )              #   Ignore Case
+
                                 
     def __init__( self, file_path=None, rate=25 ):
         self.source_file = file_path
@@ -88,40 +89,49 @@ class EdlParse( object ):
         self.extended = []
         self._interuption = None
         self._fh = None
+
         
     def _makeTC( self, tc_string ):
         tc = TC.Timecode( self.tc_rate, 1 )
-        tc.setFroMStringTC( tc_string )
+        tc.setFromStringTC( tc_string )
         return tc
+
         
     def _makeEvent( self, id, match ):
         e = EdEvent( id )
         e.inner_name = match.group(2)
         e.taking = match.group(3)
         trans = match.group(4)
-        if( trans != "C" ){
+        if( trans != "C" ):
             # may have transition duration
             e.extended[ trans ] = match.group(5)
-        e.source_in    = _makeTC( match.group(6) )
-        e.source_out   = _makeTC( match.group(7) )
-        e.timeline_in  = _makeTC( match.group(8) )
-        e.timeline_out = _makeTC( match.group(9) )
+        e.source_in    = self._makeTC( match.group(6) )
+        e.source_out   = self._makeTC( match.group(7) )
+        e.timeline_in  = self._makeTC( match.group(8) )
+        e.timeline_out = self._makeTC( match.group(9) )
         return e
+
         
     def _unexpected( self, line ):
          print "Unrecognised EDL Line:\n'{}'".format( line )
-         
+
+    @staticmethod
+    def _cleanLine( line ):
+        line = line.replace( str(26), "" )
+        return line.strip()
+
+    
     def parse( self ):
         # open file
         fh = open( self.source_file, "rb" )
         
-        cur_rate = cur_id = None
+        cur_rate = cur_e_id = None
         
-        # read title
+# Header ----------------------------------------------
         header = True
         while( header ):
             got_match = False
-            line = fh.readline()
+            line = self._cleanLine( fh.readline() )
             if( len( line ) < 3 ):
                 # blank line
                 continue
@@ -146,46 +156,51 @@ class EdlParse( object ):
                 got_match = True
                 
             # take what we can up too the first event.
-            match = self.M_EVENT.match( line ):
+            match = self.M_EVENT.match( line )
             if match:
                 header = False
                 got_match = True
             if not got_match:
                 self._unexpected(line)
                 
-        # Now examine list of Edit Events....
-        cur_id = -1
+# Event List ---------------------------------------------------------
+        cur_e_id = -1
         fails = 0
         while( len( line ) > 0 ):
+            # Guard against blank line
+            if( line.strip() == "" ):
+                line = self._cleanLine( fh.readline() )
+                fails = 0
+                
             match = self.M_DROPPING.match( line )
             if match:
                 # update dropping
                 new_rate = match.group( 1 )
                 if( new_rate != cur_rate ):
                     cur_rate = new_rate
-                line = fh.readline()
+                line = self._cleanLine( fh.readline() )
                 fails = 0
             else:
                 fails += 1
                 
             # test for event
-            match = self.M_EVENT.match( line ):
+            match = self.M_EVENT.match( line )
             if match:
                 test_id = int( match.group(1) )
-                if( test_id != cur_id ):
+                if( test_id != cur_e_id ):
                     # New Event
-                    cur_id = test_id
-                    e = self._makeEvent( cur_id, match )
+                    cur_e_id = test_id
+                    e = self._makeEvent( cur_e_id, match )
                     e.meta[ "DROPPING" ] = cur_rate
                     # store
-                    self.events[ cur_id ] = e
-                    self.event_order.append( cur_id )
+                    self.events[ cur_e_id ] = e
+                    self.event_order.append( cur_e_id )
                 else:
                     # usually a disolve transition
-                    e = self._makeEvent( cur_id, match )
+                    e = self._makeEvent( cur_e_id, match )
                     e.meta[ "DROPPING" ] = cur_rate
-                    self.events[ cur_id ].extended[ "TRANSITION" ] = e
-                line = fh.readline()
+                    self.events[ cur_e_id ].extended[ "TRANSITION" ] = e
+                line = self._cleanLine( fh.readline() )
                 fails = 0
             else:
                 fails += 1
@@ -193,7 +208,7 @@ class EdlParse( object ):
             # test for expected metadata
             match = self.M_NAMEDFX.match( line )
             if match:
-                line = fh.readline()
+                line = self._cleanLine( fh.readline() )
                 fails = 0
             else:
                 fails += 1
@@ -201,7 +216,7 @@ class EdlParse( object ):
             # test for ClipName Data
             match = self.M_CLIPNAMES.match( line )
             if match:
-                line = fh.readline()
+                line = self._cleanLine( fh.readline() )
                 fails = 0
             else:
                 fails += 1
@@ -209,17 +224,17 @@ class EdlParse( object ):
             # test for a timewarp
             match = self.M_TIMEWARP.match( line )
             if match:
-                line = fh.readline
+                line = self._cleanLine( fh.readline() )
                 fails = 0
             else:
                 fails += 1
                 
             # Last resort
-            if( fails > 4 ):
+            if( fails > 5 ):
                 # tried all Regexs, this is unknown metadata
-                self.events[ cur_id ].unexpected.append( line )
+                self.events[ cur_e_id ].unexpected.append( line )
                 self._unexpected( line )
-                line = fh.readline
+                line = self._cleanLine( fh.readline() )
                 fails = 0
                 
                 
@@ -229,6 +244,7 @@ if __name__ == "__main__":
     tests = [ "example.edl", "RSG-BLACK-1.edl", "SCENEcombined.edl" ]
     for test in tests:
         file_name = os.path.join( "testData", test )
+        print( test )
         edl = EdlParse( file_name )
         edl.parse()
         
